@@ -2,45 +2,70 @@
 
 [English](README.md) · [Русский](README.ru.md)
 
-A viewer for *You Are Empty* (2006) assets that runs in the browser: drop a model, a level, a
-collision mesh or a navmesh from your own copy of the game onto the page and look at it with its
-textures, lightmaps, skeleton and animations. Nothing is uploaded anywhere; the files are parsed in
-your browser. Part of [Project Empty](https://github.com/OpenYAE).
+A viewer for *You Are Empty* (2006) assets that runs in the browser: point it at the unpacked game
+files and look at the levels with their lightmaps, collision meshes and navigation grids, and at the
+models with their skeletons and animations. Nothing is uploaded anywhere — the files are read and
+parsed in your browser. Part of [Project Empty](https://github.com/OpenYAE).
 
 **Live:** https://openyae.github.io/yae-viewer/ (published from this repository by GitHub Pages).
+It installs as a PWA and works offline once opened.
 
-## What it opens
+![The parall level with its lightmaps in the DS2 render mode, the Objects tree grouped by material](docs/screenshots/level-parall.png)
 
-| Drop | Formats |
-|---|---|
-| Model or level | `.ds2md` (models with skeleton and animations), `.ds2` (level geometry), `.glb`, `.gltf` |
-| Overlays | `.ds2cm`, `.ds2cm2` (collision mesh, with materials in v2), `.ds2aim` (AI navmesh) |
-| Textures | `.png`, `.jpg`, `.tga`, `.dds`, and the level's lightmaps |
+![The budyonovets model with its skeleton, the clip list and the animation player](docs/screenshots/model-budyonovets.png)
 
-Where the files are in the game: models under `gameres/models/`, levels under `gameres/maps/`,
-textures under `gameres/textures/`. The game's resources are not part of this repository.
+## Using it
 
-## Running it locally
+1. **Add folder** — choose the folder with the unpacked game resources (`gameres`, or any folder
+   that holds `maps/`, `models/`, `textures/`, `materials/`). Chromium browsers ask for read access
+   once and remember the folder under *Open recent*; other browsers read the folder through the
+   classic file picker. A folder, a level or a model can also be dropped into the viewport.
+2. The **File list** shows only the files the viewer opens — `.ds2` levels and `.ds2md` models —
+   with the folder tree they sit in. Everything a file needs is found on its own: the level's
+   `.ds2cm2`/`.ds2cm` collision, its `.ds2aim` navigation grid (`_rebuilded` preferred, as the game
+   loads it), its `<level>_lm_N.tga` lightmap pages, the `.mat` material templates and every texture
+   the meshes name (`textures/**/*.dds`, `.tga`).
+3. The open file unfolds in the list into what it holds (meshes, lightmaps, lights, …); each row
+   leads to the matching group of the **Objects** tree in the inspector. The tree is the SDK's
+   Hierarchy panel without the editing: select (click, Ctrl for several, Shift for a range), frame
+   (double-click or `F`), hide with the eye (`h`), filter with the search field. **Skeleton** lists a
+   model's bones; the **Transform** card follows the selection; **Animations** lists the clips.
+4. The player under the viewport plays a clip; the timeline button opens the dope sheet — the
+   selected bone's tracks first, every animated bone after — with a draggable playhead, key
+   stepping, onion skin and snap-to-frame. The keys are read from the file and are not editable.
 
-The page is three files, `index.html`, `styles.css` and `app.js`; three.js is loaded from a CDN
-through the import map in `index.html`. ES modules do not load from `file://`, so serve the folder:
+Viewport: orbit with the mouse, `WASD`/`QE` to fly (Shift faster), click to select, double-click to
+frame. Camera presets in the top-left dropdown (`0` perspective, `7` top, `1` front, `3` left,
+`Home` reset). Render modes: **DS2 Render** (the game's picture: diffuse × lightmap × 2, or diffuse ×
+vertex light × 2, in display space), **Lit** (the level's lights through three.js), Albedo, Normals,
+Lightmap, UV checker, Wireframe. Display settings toggle lightmaps, lights, shadows, navmesh,
+collision, bounding boxes, the grid (its step in metres, 64 units = 1 m) and the skeleton gizmos.
+
+Supported: `.ds2` (level geometry, version 0.8), `.ds2md` (models 1.0 and the legacy 0.6),
+`.ds2cm`/`.ds2cm2`, `.ds2aim`, `.mat`, `.dds` (DXT1/3/5, decoded in software where the GPU lacks
+S3TC), `.tga`, `.png`/`.jpg`.
+
+## Development
 
 ```bash
-python3 -m http.server 8080      # then open http://localhost:8080/
+npm ci
+npm run dev        # Vite dev server on http://localhost:5180/yae-viewer/
+npm run build      # type-check + production build into dist/
+npm run preview    # serve dist/
 ```
+
+`VITE_BASE` sets the path the site is built for (the Pages workflow passes `/<repository>/`).
 
 ## Where the code comes from
 
-The viewer grew inside the [YAE SDK](https://github.com/OpenYAE/yae-sdk), where a frozen copy
-(`viewer.html`) remains the behavioural reference the desktop editor's viewport is checked against.
-This repository is the copy that keeps evolving as the public viewer. Its format parsers are a
-self-contained copy; the maintained format library is `packages/formats` in the SDK, and the
-specifications are in the [docs portal](https://github.com/OpenYAE/yae-docs).
-
-## Roadmap
-
-The next iteration is a UI pass, tracked in [TODO.md](TODO.md): one drop field for every file type,
-the animation export and the test controls removed, and a new design.
+The parsers under `src/formats/` are a port of the format library of the
+[YAE SDK](https://github.com/OpenYAE/yae-sdk) (`sdk-desktop/packages/formats`), with two readings
+taken from the engine's conformance pass: a `.ds2cm2` face's material is its fifth word, and an
+animation header of type N is followed by N−1 extra words. The rendering conventions — Z-up data
+under one Y-up rotation, textures uploaded unflipped and sampled with the authored UVs, bones and
+keys used verbatim, the colour pipeline of the DS2 render mode — follow the
+[YAE Engine](https://github.com/OpenYAE/yae-engine), which is checked against the game picture by
+picture. The specifications live in the [docs portal](https://github.com/OpenYAE/yae-docs).
 
 ## Legal
 

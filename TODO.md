@@ -1,15 +1,13 @@
-# TODO — the UI iteration
+# TODO
 
-Agreed on 2026-09-19; the detailed list follows from the maintainer.
+Left out of the 2.0 rewrite on purpose (decided 2026-09-20):
 
-- [ ] One drop field for every file type (model, level, overlays, textures, lightmaps) instead of
-      the separate model and texture zones; detect the type by extension and by magic.
-- [ ] Remove the animation export.
-- [ ] Remove the test controls (the transform sliders used to align navmesh and model by hand,
-      the lightmap-UV range logging, the UV preview) or move them behind a "developer" toggle.
-- [ ] New visual design (a design will be provided; until then keep the current dark glass look).
-- [ ] Split `app.js` further only if the design pass needs it; today it is the parsers plus the
-      scene in one module, as in the SDK's frozen `viewer.html`.
+- [ ] `.ds2edf` game-logic entities in the Objects tree (the SDK's "Gameplay" group with proxies) —
+      needs the Lua-like parser from `sdk-desktop/packages/formats/src/ds2Edf.ts`.
+- [ ] Editing keys in the timeline (it is read-only: the keys come from the file).
+- [ ] `.glb`/`.gltf` in the file list (the old viewer opened them; the game's formats only now).
+- [ ] Parse a level in a Web Worker (today ~1 s on the main thread for a 40 MB level, behind the
+      loading card).
+- [ ] Physics rigs (`.phs`/`.rds`) beside a model, as the SDK shows them.
 
-Rules that stay: no game assets in the repository, no upload of the user's files anywhere, the
-page must keep working as three static files behind any web server.
+Rules that stay: no game assets in the repository, no upload of the user's files anywhere.
