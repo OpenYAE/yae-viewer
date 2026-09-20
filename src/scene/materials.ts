@@ -246,3 +246,5 @@ export const TEAL = 0x3fb9a8;
 export const AMBER = 0xd8a657;
 export const RED = 0xde6b62;
 export const GREEN = 0x5fbf84;
+/** Bone markers: light, so they read on a dark model and against the dark viewport alike. */
+export const BONE_MARKER = 0xc3c9d4;

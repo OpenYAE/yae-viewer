@@ -52,6 +52,8 @@ export interface Catalog {
   textures: Map<string, FileRef[]>;
   /** every `.mat` file */
   mats: FileRef[];
+  /** every `.exr`/`.hdr` image, offered as a background */
+  hdris: FileRef[];
   /** the openable files as a folder tree (empty folders pruned) */
   tree: FolderNode;
   openableCount: number;

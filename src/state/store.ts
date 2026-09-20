@@ -7,6 +7,7 @@ import {
   type CameraPreset,
   type ClipInfo,
   type DisplaySettings,
+  type EnvironmentInfo,
   type HierarchyNode,
   type RenderMode,
   type SceneStats,
@@ -94,6 +95,8 @@ export interface ViewerState {
 
   display: DisplaySettings;
   renderMode: RenderMode;
+  /** the loaded HDR background, if any */
+  environment: EnvironmentInfo | null;
   camera: CameraReadout;
   stats: SceneStats;
   anim: AnimationState;
@@ -111,6 +114,7 @@ export interface ViewerState {
   setInspectorTab(tab: 'objects' | 'skeleton'): void;
   setDisplay(patch: Partial<DisplaySettings>): void;
   setRenderMode(mode: RenderMode): void;
+  setEnvironment(environment: EnvironmentInfo | null): void;
   setCamera(patch: Partial<CameraReadout>): void;
   setStats(stats: SceneStats): void;
   setAnim(patch: Partial<AnimationState>): void;
@@ -138,6 +142,7 @@ export const useViewer = create<ViewerState>((set) => ({
 
   display: loadDisplay(),
   renderMode: loadRenderMode(),
+  environment: null,
   camera: { preset: 'perspective', fov: 60, near: 1, far: 100000, zoom: 1 },
   stats: { fps: 0, frameMs: 0, drawCalls: 0, vertices: 0, triangles: 0, textureBytes: 0 },
   anim: {
@@ -193,6 +198,7 @@ export const useViewer = create<ViewerState>((set) => ({
     }
     set({ renderMode });
   },
+  setEnvironment: (environment) => set({ environment }),
   setCamera: (patch) => set((state) => ({ camera: { ...state.camera, ...patch } })),
   setStats: (stats) => set({ stats }),
   setAnim: (patch) => set((state) => ({ anim: { ...state.anim, ...patch } })),

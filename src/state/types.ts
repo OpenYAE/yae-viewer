@@ -64,6 +64,8 @@ export interface DisplaySettings {
   boundingBoxes: boolean;
   grid: boolean;
   skeleton: boolean;
+  /** show the loaded HDR image behind the scene */
+  hdrBackground: boolean;
   /** exposure multiplier, 0..3 */
   exposure: number;
   /** grid cell in metres */
@@ -80,6 +82,7 @@ export const DEFAULT_DISPLAY: DisplaySettings = {
   boundingBoxes: false,
   grid: true,
   skeleton: true,
+  hdrBackground: true,
   exposure: 1,
   gridStep: 1,
 };
@@ -142,6 +145,12 @@ export interface SelectionTransform {
   scale: [number, number, number];
   /** world-space size in DS2 units when the selection has a box */
   size?: [number, number, number];
+}
+
+export interface EnvironmentInfo {
+  name: string;
+  width: number;
+  height: number;
 }
 
 export interface Toast {

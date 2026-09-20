@@ -10,7 +10,7 @@ import * as THREE from 'three';
 import { DS2CollisionType, animationFps, computeModelNormalization, type DS2Model, type DS2ModelBone, type MatLibrary } from '../formats';
 import type { ClipInfo, HierarchyNode } from '../state/types';
 import { DS2_TO_YUP_ROTATION_X, invertedWindingRatio } from './levelBuilder';
-import { ACCENT, resolveTemplate, type SurfaceDesc } from './materials';
+import { ACCENT, BONE_MARKER, resolveTemplate, type SurfaceDesc } from './materials';
 
 export type ModelBuildResult = {
   geometryGroup: THREE.Group;
@@ -339,8 +339,8 @@ export function buildModel(ctx: ModelBuildContext): ModelBuildResult {
     boneMarkers.renderOrder = 31;
     boneMarkers.frustumCulled = false;
     boneMarkers.userData.overlay = true;
-    const dark = new THREE.Color(0x0b0d11);
-    for (let i = 0; i < bones.length; i += 1) boneMarkers.setColorAt(i, dark);
+    const base = new THREE.Color(BONE_MARKER);
+    for (let i = 0; i < bones.length; i += 1) boneMarkers.setColorAt(i, base);
     if (boneMarkers.instanceColor) boneMarkers.instanceColor.needsUpdate = true;
   }
 

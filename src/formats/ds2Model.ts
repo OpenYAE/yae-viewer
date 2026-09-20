@@ -91,6 +91,8 @@ export class DS2Model {
   collisionShapes: DS2CollisionShape[] = [];
   animations: DS2ModelAnimation[] = [];
   animationHeaderType = 0;
+  /** the `type - 1` u16 words that follow the header type */
+  animationHeaderWords: number[] = [];
   /** where the animation section stopped short, if it did */
   animationWarning: string | null = null;
 
@@ -313,7 +315,7 @@ export class DS2Model {
       // Type N carries N-1 extra u16 words (the engine's reading; the SDK
       // handled only type 2 and dropped the animations of 76 models).
       if (headerType >= 2) {
-        for (let i = 0; i < headerType - 1; i += 1) r.readUInt16LE();
+        for (let i = 0; i < headerType - 1; i += 1) this.animationHeaderWords.push(r.readUInt16LE());
       }
       const numAnims = r.readUInt16LE();
       for (let i = 0; i < numAnims; i += 1) {

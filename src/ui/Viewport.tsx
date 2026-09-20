@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { ReactElement } from 'react';
 import { formatBytes } from '../fs/catalog';
 import { getEngine, mountEngine } from '../scene/engine';
+import { isHdrFileName } from '../scene/environment';
 import { UNITS_PER_METER } from '../scene/levelBuilder';
 import { useViewer } from '../state/store';
 import { CAMERA_PRESETS, RENDER_MODE_LABELS, type CameraPreset, type RenderMode } from '../state/types';
@@ -78,6 +79,11 @@ export function Viewport(): ReactElement {
         event.preventDefault();
         dragDepth.current = 0;
         setDragging(false);
+        const files = Array.from(event.dataTransfer.files ?? []);
+        if (files.length === 1 && isHdrFileName(files[0].name)) {
+          void getEngine()?.setEnvironmentFile(files[0]);
+          return;
+        }
         void handleDrop(event.dataTransfer);
       }}
     >
@@ -92,7 +98,7 @@ export function Viewport(): ReactElement {
       {loading ? <LoadingOverlay /> : null}
       {dragging ? (
         <div className="drop-overlay">
-          <span className="drop-overlay__text">Drop a folder, a level or a model</span>
+          <span className="drop-overlay__text">Drop a folder, a level, a model — or an .exr/.hdr background</span>
         </div>
       ) : null}
     </div>

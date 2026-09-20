@@ -7,7 +7,7 @@ import type { AssetInfo, DisplayToggleKey, HierarchyKind, HierarchyNode } from '
 import { getEngine } from '../scene/engine';
 import { addFolder, openFile, openRecent, rescan } from './actions';
 import { IconButton, NumberRow, SearchField, SectionHeader, SliderField, ToggleRow } from './controls';
-import { BoneIcon, ChevronDownIcon, CollapseIcon, CubeIcon, FolderIcon, HistoryIcon, LayersIcon, MeshIcon, PlayIcon, PlusIcon, ReloadIcon } from './icons';
+import { BoneIcon, ChevronDownIcon, CloseIcon, CollapseIcon, CubeIcon, FolderIcon, HistoryIcon, LayersIcon, MeshIcon, PlayIcon, PlusIcon, ReloadIcon } from './icons';
 import { TreeView, type TreeNode, type TreeViewHandle } from './TreeView';
 
 type FileTreeNode = TreeNode & { kind: 'folder' | 'file' | 'summary'; path?: string; ext?: string; ref?: FileNode['ref']; size?: number; groupId?: string; tab?: 'objects' | 'skeleton' };
@@ -235,6 +235,7 @@ function DisplaySettings(): ReactElement {
   const display = useViewer((s) => s.display);
   const setDisplay = useViewer((s) => s.setDisplay);
   const asset = useViewer((s) => s.asset);
+  const environment = useViewer((s) => s.environment);
   const enabledCount = DISPLAY_TOGGLES.filter((t) => display[t.key]).length;
   const update = (patch: Partial<typeof display>) => {
     setDisplay(patch);
@@ -255,9 +256,88 @@ function DisplaySettings(): ReactElement {
           />
         ))}
         <span className="divider" />
+        <EnvironmentRow />
+        <ToggleRow label="HDR background" checked={display.hdrBackground} disabled={!environment} onChange={(checked) => update({ hdrBackground: checked })} />
+        <span className="divider" />
         <SliderField id="exposure" label="Exposure" value={display.exposure} min={0} max={3} step={0.05} format={(v) => v.toFixed(2)} onChange={(v) => update({ exposure: v })} />
         <NumberRow id="gridstep" label="Grid step" value={display.gridStep} unit="m" min={0.05} onCommit={(v) => update({ gridStep: v })} />
       </div>
+    </div>
+  );
+}
+
+/** The HDR backdrop: a file picker, or one of the .exr/.hdr images found in the folder. */
+function EnvironmentRow(): ReactElement {
+  const environment = useViewer((s) => s.environment);
+  const catalog = useViewer((s) => s.catalog);
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (event: PointerEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) setOpen(false);
+    };
+    window.addEventListener('pointerdown', onDown);
+    return () => window.removeEventListener('pointerdown', onDown);
+  }, [open]);
+  const pickFile = () => {
+    setOpen(false);
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.exr,.hdr';
+    input.style.display = 'none';
+    document.body.appendChild(input);
+    input.addEventListener('change', () => {
+      const file = input.files?.[0];
+      input.remove();
+      if (file) void getEngine()?.setEnvironmentFile(file);
+    });
+    input.addEventListener('cancel', () => input.remove());
+    input.click();
+  };
+  const hdris = catalog?.hdris ?? [];
+  return (
+    <div className="number-row" style={{ position: 'relative', gap: 8 }} ref={ref}>
+      <span className="number-row__label" style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={environment ? `${environment.name} · ${environment.width}×${environment.height}` : undefined}>
+        {environment ? environment.name : 'Environment'}
+      </span>
+      <span style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+        {environment ? (
+          <IconButton label="Remove HDR background" onClick={() => getEngine()?.clearEnvironment()}>
+            <CloseIcon size={12} />
+          </IconButton>
+        ) : null}
+        <button type="button" className="chip-button chip-button--small" style={{ fontFamily: 'inherit', fontSize: 11.5 }} aria-haspopup="menu" aria-expanded={open} onClick={() => (hdris.length > 0 ? setOpen((v) => !v) : pickFile())}>
+          Load HDR
+          <ChevronDownIcon size={10} />
+        </button>
+      </span>
+      {open ? (
+        <div className="menu" role="menu" style={{ right: 8, top: 30, minWidth: 200, maxWidth: 260 }}>
+          <button type="button" role="menuitem" className="menu__item" style={{ paddingLeft: 10 }} onClick={pickFile}>
+            <span className="menu__label">Choose a file… (.exr, .hdr)</span>
+          </button>
+          <span className="menu__separator" />
+          {hdris.slice(0, 12).map((ref) => (
+            <button
+              key={ref.path}
+              type="button"
+              role="menuitem"
+              className="menu__item"
+              style={{ paddingLeft: 10 }}
+              title={ref.path}
+              onClick={async () => {
+                setOpen(false);
+                const engine = getEngine();
+                if (!engine) return;
+                await engine.setEnvironmentFile(await ref.getFile());
+              }}
+            >
+              <span className="menu__label">{ref.name}</span>
+            </button>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }

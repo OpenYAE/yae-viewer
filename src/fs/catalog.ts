@@ -23,6 +23,7 @@ export function buildCatalog(files: FileRef[], rootName: string, source: Catalog
   const byDir = new Map<string, FileRef[]>();
   const textures = new Map<string, FileRef[]>();
   const mats: FileRef[] = [];
+  const hdris: FileRef[] = [];
 
   for (const file of files) {
     byPath.set(file.path.toLowerCase(), file);
@@ -37,6 +38,8 @@ export function buildCatalog(files: FileRef[], rootName: string, source: Catalog
       candidates.push(file);
     } else if (file.ext === 'mat') {
       mats.push(file);
+    } else if (file.ext === 'exr' || file.ext === 'hdr') {
+      hdris.push(file);
     }
   }
   for (const candidates of textures.values()) {
@@ -74,7 +77,8 @@ export function buildCatalog(files: FileRef[], rootName: string, source: Catalog
   };
   finish(root);
 
-  return { rootName, source, files, byPath, byDir, textures, mats, tree: root, openableCount, handle };
+  hdris.sort((a, b) => a.name.localeCompare(b.name));
+  return { rootName, source, files, byPath, byDir, textures, mats, hdris, tree: root, openableCount, handle };
 }
 
 /** Finds a texture by the name a mesh stores (no path, no extension), preferring dds then tga. */

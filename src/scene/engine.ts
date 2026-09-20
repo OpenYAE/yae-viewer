@@ -14,8 +14,9 @@ import { loadAsset, type LoadedAsset } from './assetLoader';
 import { makeGrid } from './grid';
 import { UNITS_PER_METER } from './levelBuilder';
 import { LightRig } from './lightRig';
-import { ACCENT, MaterialFactory, type SurfaceDesc } from './materials';
+import { ACCENT, BONE_MARKER, MaterialFactory, type SurfaceDesc } from './materials';
 import { buildLightRangeHelper } from './overlays';
+import { disposeEnvironment, ensurePmrem, loadEnvironment, type LoadedEnvironment } from './environment';
 
 const DEFAULT_VIEW_DIR = new THREE.Vector3(-0.55, 0.42, 0.72).normalize();
 const tmpVec = new THREE.Vector3();
@@ -60,6 +61,7 @@ export class ViewerEngine {
   private action: THREE.AnimationAction | null = null;
   private ghosts: Ghost[] = [];
   private keys = new Set<string>();
+  private environment: LoadedEnvironment | null = null;
   private pointerDown: { x: number; y: number; moved: boolean } | null = null;
   private resizeObserver: ResizeObserver;
   private disposed = false;
@@ -125,9 +127,53 @@ export class ViewerEngine {
     window.removeEventListener('keydown', this.onKeyDown);
     window.removeEventListener('keyup', this.onKeyUp);
     this.unload();
+    this.clearEnvironment();
     this.materials.dispose();
     this.controls.dispose();
     this.renderer.dispose();
+  }
+
+  // ─── HDR environment ────────────────────────────────────────────────────
+
+  async setEnvironmentFile(file: File): Promise<void> {
+    const store = useViewer.getState();
+    store.setLoading({ title: 'Decoding HDR', detail: file.name, progress: -1 });
+    try {
+      const env = await loadEnvironment(file);
+      this.clearEnvironment();
+      this.environment = env;
+      store.setEnvironment({ name: env.name, width: env.width, height: env.height });
+      this.applyEnvironment();
+      this.applyModeLighting();
+    } catch (error) {
+      store.pushToast('error', `${file.name}: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      useViewer.getState().setLoading(null);
+    }
+  }
+
+  clearEnvironment(): void {
+    if (this.environment) {
+      disposeEnvironment(this.environment);
+      this.environment = null;
+    }
+    this.scene.background = null;
+    this.scene.environment = null;
+    useViewer.getState().setEnvironment(null);
+    this.applyModeLighting();
+  }
+
+  /** Background per the toggle; image-based light only where the picture is three.js's (Lit). */
+  private applyEnvironment(): void {
+    const env = this.environment;
+    if (!env) return;
+    this.scene.background = this.display.hdrBackground ? env.texture : null;
+    this.scene.backgroundIntensity = this.display.exposure;
+    this.scene.environment = this.renderMode === 'lit' ? ensurePmrem(env, this.renderer) : null;
+  }
+
+  hasEnvironment(): boolean {
+    return this.environment !== null;
   }
 
   private resize(): void {
@@ -326,10 +372,12 @@ export class ViewerEngine {
     const lit = this.renderMode === 'lit';
     this.lightRig.setEnabled(lit && this.display.lights);
     if (lit) {
+      // With an HDR environment the image lights the scene; the fill lights step back.
+      const ibl = this.environment ? 0.35 : 1;
       this.hemisphere.color.setHex(0xffffff);
       this.hemisphere.groundColor.setHex(0x404040);
-      this.hemisphere.intensity = isModel ? 1.6 : 0.55;
-      this.keyLight.intensity = isModel ? 1.4 : 0;
+      this.hemisphere.intensity = (isModel ? 1.6 : 0.55) * ibl;
+      this.keyLight.intensity = (isModel ? 1.4 : 0) * ibl;
     } else {
       // DS2 mode: models take the engine's hemispheric ambient (sky 1, ground 0.35)
       this.hemisphere.color.setHex(0xffffff);
@@ -344,6 +392,7 @@ export class ViewerEngine {
     this.display = settings;
     this.materials.setLightmapsVisible(settings.lightmaps);
     this.materials.setExposure(settings.exposure);
+    this.applyEnvironment();
     this.lightRig.setEnabled(this.renderMode === 'lit' && settings.lights);
     this.lightRig.setShadows(settings.shadows);
     const shadows = settings.shadows && this.renderMode === 'lit';
@@ -496,8 +545,8 @@ export class ViewerEngine {
     this.selectionHelpers = [];
     const markers = this.asset?.model?.boneMarkers;
     if (markers) {
-      const dark = new THREE.Color(0x0b0d11);
-      for (let i = 0; i < markers.count; i += 1) markers.setColorAt(i, dark);
+      const base = new THREE.Color(BONE_MARKER);
+      for (let i = 0; i < markers.count; i += 1) markers.setColorAt(i, base);
       if (markers.instanceColor) markers.instanceColor.needsUpdate = true;
     }
   }
