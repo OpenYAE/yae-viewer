@@ -20,7 +20,10 @@ export type DS2ModelMaterial = {
   bbox: { min: number[]; max: number[] };
   faceCount: number;
   vertexCount: number;
-  /** local indices into this material's vertices */
+  /**
+   * local indices into this material's vertices — a triangle list, or a
+   * triangle strip when `primitive` is 1; read them through `triangleList()`
+   */
   indices: Uint16Array;
   positions: Float32Array;
   normals: Float32Array;
@@ -28,8 +31,42 @@ export type DS2ModelMaterial = {
   /** per vertex: up to 4 (boneId, weight) pairs; empty when the material is not skinned */
   skinWeights: Array<{ boneIds: number[]; weights: number[] }>;
   skinned: boolean;
-  unk1: number;
+  /**
+   * 0 = triangle list (`indices` are `faceCount × 3`), 1 = triangle strip
+   * (`indices` is the strip's run, `faceCount` its real triangles). Eighteen
+   * submeshes in the shipped models are strips — three faces of each painted
+   * sky box (`sky_wall`, `sky_funi`), a cable part of the four `mehan`
+   * machines, a few glass panes — drawn as a list they lose most of their
+   * triangles. (The SDK's parser calls this byte `unk1`.)
+   */
+  primitive: number;
 };
+
+/**
+ * A material's triangles as a list whatever its primitive: a strip is
+ * unrolled with the even/odd winding rule and its degenerate windows (a
+ * repeated index) dropped, as the engine's `DS2Model::triangleList()` does;
+ * a list is returned as stored, less any incomplete trailing triangle.
+ */
+export function triangleList(material: Pick<DS2ModelMaterial, 'indices' | 'primitive'>): Uint16Array {
+  const { indices } = material;
+  if (material.primitive !== 1) return indices.length % 3 === 0 ? indices : indices.subarray(0, indices.length - (indices.length % 3));
+  if (indices.length < 3) return new Uint16Array(0);
+  const out = new Uint16Array((indices.length - 2) * 3);
+  let n = 0;
+  for (let i = 2; i < indices.length; i += 1) {
+    let a = indices[i - 2];
+    let b = indices[i - 1];
+    const c = indices[i];
+    if (a === b || b === c || a === c) continue;
+    if (i & 1) [a, b] = [b, a];
+    out[n] = a;
+    out[n + 1] = b;
+    out[n + 2] = c;
+    n += 3;
+  }
+  return out.subarray(0, n);
+}
 
 export type DS2ModelBone = {
   name: string;
@@ -150,7 +187,7 @@ export class DS2Model {
     for (let i = 0; i < 4; i += 1) textureSlots.push(this.readLPString());
     const bbox = { min: this.readVec3(), max: this.readVec3() };
     const faceCount = r.readUInt32LE();
-    const unk1 = r.readUInt8();
+    const primitive = r.readUInt8();
     r.readUInt32LE(); // unique bone count
     const indexCount = r.readUInt32LE();
     const indices = new Uint16Array(indexCount);
@@ -189,7 +226,7 @@ export class DS2Model {
       uvs,
       skinWeights,
       skinned: skinType > 0,
-      unk1,
+      primitive,
     };
   }
 
@@ -207,7 +244,7 @@ export class DS2Model {
       let faceCount = r.readUInt32LE();
       const vertexCount = r.readUInt32LE();
       const indexCount = r.readUInt32LE();
-      const unk1 = r.readUInt8();
+      const primitive = r.readUInt8();
       const positions = new Float32Array(vertexCount * 3);
       const normals = new Float32Array(vertexCount * 3);
       const uvs = new Float32Array(vertexCount * 2);
@@ -240,7 +277,7 @@ export class DS2Model {
         uvs,
         skinWeights,
         skinned: false,
-        unk1,
+        primitive,
       };
       this.materials.push(material);
       this.faceCount += faceCount;

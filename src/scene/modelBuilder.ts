@@ -7,7 +7,7 @@
  * Y-up rotation lives on the `Geometry` group above everything.
  */
 import * as THREE from 'three';
-import { DS2CollisionType, animationFps, computeModelNormalization, type DS2Model, type DS2ModelBone, type MatLibrary } from '../formats';
+import { DS2CollisionType, animationFps, computeModelNormalization, triangleList, type DS2Model, type DS2ModelBone, type MatLibrary } from '../formats';
 import type { ClipInfo, HierarchyNode } from '../state/types';
 import { DS2_TO_YUP_ROTATION_X, invertedWindingRatio } from './levelBuilder';
 import { ACCENT, BONE_MARKER, resolveTemplate, type SurfaceDesc } from './materials';
@@ -224,7 +224,7 @@ export function buildModel(ctx: ModelBuildContext): ModelBuildResult {
 
   const surfaceCache = new Map<string, SurfaceDesc>();
   model.materials.forEach((material, index) => {
-    if (material.vertexCount === 0 || material.indices.length === 0) return;
+    if (material.vertexCount === 0) return;
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute('position', new THREE.BufferAttribute(material.positions, 3));
     geometry.setAttribute('normal', new THREE.BufferAttribute(material.normals, 3));
@@ -233,7 +233,8 @@ export function buildModel(ctx: ModelBuildContext): ModelBuildResult {
     // A skinned one is checked in its posed state by the engine (the bind
     // rows can hold a mirror that flips the winding on the way to the pose).
     const useSkin = skinned && material.skinned;
-    let indices = material.indices;
+    let indices = triangleList(material);
+    if (indices.length === 0) return;
     if (!useSkin && invertedWindingRatio(material.positions, material.normals, indices) >= 0.5) {
       const flipped = new Uint16Array(indices.length);
       for (let i = 0; i + 2 < indices.length; i += 3) {
@@ -313,7 +314,7 @@ export function buildModel(ctx: ModelBuildContext): ModelBuildResult {
     meshNodes.push({ id: nodeId, name: label, kind: 'mesh-item', meta: { material: material.shader, texture: material.textureKey } });
     if (material.textureKey) textureNames.add(material.textureKey);
     vertexCount += material.vertexCount;
-    triangleCount += material.indices.length / 3;
+    triangleCount += indices.length / 3;
   });
 
   // Skeleton helper and pickable markers. The markers are one instanced

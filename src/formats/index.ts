@@ -2,7 +2,7 @@ export { BinaryReader } from './binaryReader';
 export type { Vec3, Vec2, BBox } from './binaryReader';
 export { DS2Level, LevelMesh, YAEBuffer, YAE_BUFFER_MASK, normalizeTextureName, resolveMeshGeometry } from './ds2Level';
 export type { VistreeNode, LevelLight, LevelModel, LevelModelDesc, ResolvedMeshGeometry } from './ds2Level';
-export { DS2Model, DS2CollisionType, animationFps, computeModelNormalization, normalizeModelTextureName } from './ds2Model';
+export { DS2Model, DS2CollisionType, animationFps, computeModelNormalization, normalizeModelTextureName, triangleList } from './ds2Model';
 export type { DS2ModelMaterial, DS2ModelBone, DS2CollisionShape, DS2ModelAnimation, DS2BoneAnimation, DS2AnimKey } from './ds2Model';
 export { parseDS2CM, parseDS2CM2 } from './ds2Collision';
 export type { DS2Collision, DS2CollisionFace } from './ds2Collision';
