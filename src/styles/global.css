@@ -143,14 +143,12 @@ input:focus-visible,
 }
 
 .app-header__logo {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: block;
   width: 24px;
   height: 24px;
   border-radius: 6px;
-  background: var(--accent);
-  color: var(--bg);
+  background: var(--control);
+  object-fit: cover;
   flex-shrink: 0;
 }
 
@@ -1062,14 +1060,12 @@ input:focus-visible,
 }
 
 .empty-state__icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: block;
   width: 56px;
   height: 56px;
   border-radius: 14px;
   background: var(--control);
-  color: var(--accent);
+  object-fit: cover;
 }
 
 .empty-state__title {

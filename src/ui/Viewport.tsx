@@ -8,7 +8,7 @@ import { useViewer } from '../state/store';
 import { CAMERA_PRESETS, RENDER_MODE_LABELS, type CameraPreset, type RenderMode } from '../state/types';
 import { addFolder, handleDrop, openRecent } from './actions';
 import { Dropdown } from './controls';
-import { CameraIcon, CubeIcon, FolderIcon, HistoryIcon, MaterialIcon } from './icons';
+import { CameraIcon, FolderIcon, HistoryIcon, MaterialIcon } from './icons';
 
 const RENDER_ENTRIES = (Object.keys(RENDER_MODE_LABELS) as RenderMode[]).map((id) => ({ id, label: RENDER_MODE_LABELS[id], key: id === 'wireframe' ? 'W' : undefined, separatorBefore: id === 'albedo' || id === 'wireframe' }));
 
@@ -338,9 +338,7 @@ function EmptyState(): ReactElement {
   }, [recentOpen]);
   return (
     <div className="empty-state" role="region" aria-label="Nothing loaded">
-      <span className="empty-state__icon">
-        <CubeIcon size={26} strokeWidth={1.6} />
-      </span>
+      <img className="empty-state__icon" src={`${import.meta.env.BASE_URL}icons/icon.svg`} width={56} height={56} alt="" />
       <span className="empty-state__title">{catalog ? 'Pick a file' : 'Nothing loaded'}</span>
       <span className="empty-state__text">
         {catalog

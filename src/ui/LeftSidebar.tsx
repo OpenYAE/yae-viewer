@@ -112,9 +112,7 @@ export function LeftSidebar(): ReactElement {
   return (
     <aside className="sidebar sidebar--left">
       <div className="app-header">
-        <span className="app-header__logo">
-          <CubeIcon size={14} strokeWidth={2} />
-        </span>
+        <img className="app-header__logo" src={`${import.meta.env.BASE_URL}icons/icon.svg`} width={24} height={24} alt="" />
         <span className="app-header__title">YAE Viewer</span>
         <span className="grow" />
         <span className="app-header__version">{__APP_VERSION__}</span>
