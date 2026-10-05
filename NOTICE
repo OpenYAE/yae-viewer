@@ -1,0 +1,14 @@
+YAE Viewer
+Copyright (C) 2026 the Project Empty contributors
+
+The code is under the MIT licence (LICENSE). The npm dependencies (three.js and
+the rest) are under their own licences (node_modules/*/LICENSE); the published
+site bundles them. The screenshots in docs/screenshots/ show the game's assets
+and are included as illustrations.
+
+You Are Empty, its content and the original DS2 Engine belong to their rights
+holders. None of it is part of this repository; the project is not affiliated
+with the rights holders.
+
+Most of this repository was written by AI agents (Anthropic's Claude and
+OpenAI's Codex) under the maintainer's direction; see the project-empty README.
