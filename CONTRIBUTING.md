@@ -44,7 +44,10 @@ worker come from `vite.config.ts`.
 2. Open the change in a browser with real game files: at least one level (`med1` is the reference:
    4 455 meshes, one lightmap page, a v2 collision, a rebuilt navmesh, 93 lights) and one skinned
    model with animations (`fireman`, `ded`, `dog` — the dog's bind pose is 36× its animated scale
-   and its faces wind the other way, so it catches skinning mistakes the others do not).
+   and its faces wind the other way, so it catches skinning mistakes the others do not). Skin as the
+   original does — keys verbatim, `inverse(bind world)` as authored, no scale or bbox fit: the nurse and the
+   thunder gun animate a skeleton 0.8 of their bind and must not be "corrected" (the portal's DS2MD page,
+   section "Skinning").
 3. For anything that touches rendering, loading or the trees, run the headless smoke and look at
    the screenshots it writes:
 
